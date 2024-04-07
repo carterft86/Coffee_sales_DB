@@ -1,0 +1,150 @@
+-- Transaction records from a fictitious coffee shop in New York City
+-- Sourced from https://mavenanalytics.io/
+
+--1. What is the most and least item in the menu?
+-- most expensive item
+SELECT TOP 1
+	product_category,
+	product_type,
+	product_detail,
+	MAX(unit_price) AS price
+FROM dbo.Transactions
+GROUP BY product_category, product_type, product_detail
+ORDER BY 4 DESC
+
+-- least expensive item
+SELECT TOP 1
+	product_category,
+	product_type,
+	product_detail,
+	MAX(unit_price) AS price
+FROM dbo.Transactions
+GROUP BY product_category, product_type, product_detail
+ORDER BY 4 ASC
+
+--2 How many stores are there and what are their locations?
+SELECT DISTINCT
+	store_id,
+	store_location
+FROM dbo.Transactions
+
+-- 3. Which store is performing the best and which one is the worst based on $ sales performance?
+SELECT
+	store_id,
+	store_location,
+	ROUND(SUM(unit_price * transaction_qty), 2) AS total_sales
+FROM dbo.Transactions
+GROUP BY store_id, store_location
+ORDER BY total_sales DESC;
+
+
+-- 4. What are the top 5 best selling items at each store
+--for store ID=3, astoria 
+SELECT TOP 5
+	store_id,
+	store_location,
+	product_id,
+	product_detail,
+	product_category,
+	product_type,
+	ROUND(SUM(unit_price * transaction_qty),2) AS total_Sales
+FROM dbo.transactions
+WHERE store_id = 3
+GROUP BY store_id, store_location, product_id, product_detail, product_category, product_type
+ORDER BY total_sales DESC
+
+--for store ID=5, lower manhattan
+SELECT TOP 5
+	store_id,
+	store_location,
+	product_id,
+	product_detail,
+	product_category,
+	product_type,
+	ROUND(SUM(unit_price * transaction_qty),2) AS total_Sales
+FROM dbo.transactions
+WHERE store_id = 5
+GROUP BY store_id, store_location, product_id, product_detail, product_category, product_type
+ORDER BY total_sales DESC
+
+--for store ID=8, hell's kitchen
+SELECT TOP 5
+	store_id,
+	store_location,
+	product_id,
+	product_detail,
+	product_category,
+	product_type,
+	ROUND(SUM(unit_price * transaction_qty),2) AS total_Sales
+FROM dbo.transactions
+WHERE store_id = 8
+GROUP BY store_id, store_location, product_id, product_detail, product_category, product_type
+ORDER BY total_sales DESC
+
+--5. how many products do we carry?
+SELECT 
+	COUNT(DISTINCT product_id) AS num_products
+FROM dbo.transactions
+
+--6. what is the average transaction value per store?
+--for store ID=3, astoria 
+SELECT 
+	store_id,
+	store_location,
+	ROUND(AVG(unit_price * transaction_qty), 2) AS avg_transaction
+FROM dbo.transactions
+WHERE store_id = 3
+GROUP BY store_id, store_location
+
+--for store ID=5, lower manhattan
+SELECT 
+	store_id,
+	store_location,
+	ROUND(AVG(unit_price * transaction_qty), 2) AS avg_transaction
+FROM dbo.transactions
+WHERE store_id = 5
+GROUP BY store_id, store_location
+
+--for store ID=8, hell's kitchen
+SELECT 
+	store_id,
+	store_location,
+	ROUND(AVG(unit_price * transaction_qty), 2) AS avg_transaction
+FROM dbo.transactions
+WHERE store_id = 8
+GROUP BY store_id, store_location;
+
+-- 7. which day had the most transactions per store?
+SELECT 
+    sq.store_location,
+    sq.transaction_date,
+    sq.num_transactions
+FROM (
+    SELECT
+        store_location,
+        transaction_date,
+        COUNT(*) AS num_transactions,
+        ROW_NUMBER() OVER(PARTITION BY store_location ORDER BY COUNT(*) DESC) as rn
+    FROM dbo.Transactions
+    GROUP BY store_location, transaction_date
+) sq
+WHERE sq.rn = 1
+ORDER BY sq.num_transactions DESC;
+
+
+-- 8. which day had the least transactions per store?
+SELECT 
+    sq.store_location,
+    sq.transaction_date,
+    sq.num_transactions
+FROM (
+    SELECT
+        store_location,
+        transaction_date,
+        COUNT(*) AS num_transactions,
+        ROW_NUMBER() OVER(PARTITION BY store_location ORDER BY COUNT(*)) as rn
+    FROM dbo.Transactions
+    GROUP BY store_location, transaction_date
+) sq
+WHERE sq.rn = 1
+ORDER BY sq.num_transactions;
